@@ -48,6 +48,7 @@ unsigned long lastSample = 0;
 unsigned long lastReminder = 0;
 unsigned long alertStart = 0;
 unsigned long lastButton = 0;
+unsigned long lastDrink = 0;
 
 // System states
 bool alertActive = false;
@@ -61,6 +62,14 @@ float measureMl() {
 
   // Read simulated water level
   int raw = analogRead(SIM_ADC);
+
+  // Print raw sensor reading every second
+  static unsigned long lastDebug = 0;
+
+  if (millis() - lastDebug >= 1000) {
+    lastDebug = millis();
+    Serial.printf("RAW SENSOR: %d\n", raw);
+  }
 
   return constrain(
     raw * (CAPACITY_ML / 4095.0f),
@@ -203,6 +212,7 @@ void setup() {
 
   // Start reminder countdown
   lastReminder = millis();
+  lastDrink = lastReminder;
 
   drawScreen();
 
@@ -250,17 +260,21 @@ void loop() {
         float delta = previousMl - currentMl;
 
         // Detect water consumption
-        if (delta >= DRINK_THRESHOLD_ML) {
+        // Detect water consumption
+if (delta >= DRINK_THRESHOLD_ML) {
 
-          consumedMl += delta;
+  consumedMl += delta;
+  lastDrink = now;
 
-          // Do not interrupt reminder during testing
-          Serial.printf(
-            "Drink detected: %.1f mL; total %.1f mL\n",
-            delta,
-            consumedMl
-          );
-        }
+  // Restart reminder countdown after drinking
+  lastReminder = now;
+
+  Serial.printf(
+    "Drink detected: %.1f mL; total %.1f mL\n",
+    delta,
+    consumedMl
+  );
+}
 
         // Update previous reading
         if (
