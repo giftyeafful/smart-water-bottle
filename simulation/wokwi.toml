@@ -1,0 +1,5 @@
+[wokwi]
+version = 1
+diagram = "diagram.json"
+firmware = "../firmware/.pio/build/wokwi/firmware.bin"
+elf = "../firmware/.pio/build/wokwi/firmware.elf"
